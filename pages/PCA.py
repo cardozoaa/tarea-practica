@@ -29,14 +29,17 @@ st.set_page_config(page_title='Trabajo Practico'
                    ,page_icon=':shark:'
                    ,layout='wide')
 
-
 st.sidebar.subheader('Carga de datos')
 archivo = st.sidebar.file_uploader('Seleccione un archivo', type=['csv', 'xlsx'])
-if archivo:
+
+# Solo cargar el carchivo si aun no existe df en st.session_state
+if archivo and 'df' not in st.session_state:
     df = cargar_datos(archivo)
     st.session_state.df = df
     st.info('El archivo se ha cargado correctamente')
     st.write('El dataset tiene', df.shape[0], 'filas y', df.shape[1], 'columnas')
+elif 'df' in st.session_state:
+    df = st.session_state.df
 else:
     st.warning('No se ha cargado ningun archivo')
 
@@ -45,16 +48,21 @@ opciones = ['Analisis Exploratorio',
             'Analisis de Componentes Principales',
             'PCA - Pinguinos']
 
-# agregar radio
+# Seleccionar opcion
 opcion = st.sidebar.radio('Selecciona una Opcion',opciones)
 
 if opcion == 'Analisis Exploratorio':
     st.title('Analisis Exploratorio')
+
+    #verificar si el archivo ya fue cargado
     if 'df' in st.session_state:
-        df = st.session_state.df
+        df = st.session_state.df #Usamos el Fatagrame almacenado en la sesion
+
+        st.subheader('Dataframe cargado:')
         st.write(df)
         st.subheader('Primeras 5 filas')
         st.write(df.head())
+
         st.subheader('Informacion del Dataset')
         st.write(df.describe())
 
@@ -64,28 +72,38 @@ if opcion == 'Analisis Exploratorio':
             st.warning('El dataset tiene valores nulos')
             st.write(df.isnull().sum())
             limpiar_datos = st.radio('Desea limpiar los datos nulos', ['Si', 'No'])
+
+
             if limpiar_datos == 'Si':
                 if st.button('Confirmar'):
                     with st.spinner('Eliminando valores nulos'):
-                        df = df.dropna()
+                        #Eliminar valores nulos
+                        df = df.dropna().copy()
+                        st.session_state.df = df
                         st.success('Valores nulos eliminados')
                         st.write(df.isnull().sum())
-                    st.session_state.df = df
+                        st.write("DataFrame después de eliminar los nulos:")
+                        st.write(df)
             else:
                 st.info('No se han eliminado los valores nulos')
         else:
             st.success('El dataset no tiene valores nulos')
+
+
         # Eliminar columnas categoricas
         st.subheader('Eliminar Columnas')
-        df2 = st.session_state.df
-        lista_columnas = df2.columns
+        lista_columnas = df.columns
         columnas = st.multiselect('Seleccione las columnas a eliminar', lista_columnas)
+
+
         if st.button('Eliminar Columnas'):
             with st.spinner('Eliminando columnas'):
-                df2 = df2.drop(columns=columnas)
+                df = df.drop(columns=columnas).copy()
+                st.session_state.df = df
                 st.success('Columnas eliminadas')
-                st.write(df2)
-            st.session_state.df = df2
+                st.write("DataFrame después de eliminar columnas:")
+                st.write(df)
+            
 
     else:
         st.warning('No se ha cargado ningun archivo')
