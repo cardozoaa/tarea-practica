@@ -5,11 +5,14 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 #agregar configuracion de la pagina
-st.set_page_config(page_title='TP - Maestria en Ciencia de Datos', layout='wide')
+st.set_page_config(page_title='Trabajo Practico'
+                   ,page_icon=':shark:'
+                   ,layout='wide')
 
-st.title('Trabajo Practico - Maestria en Ciencia de Datos')
+# agregar titulo
+st.title('PCA - Componentes Principales')
 
-st.sidebar.title('Menu')
+st.sidebar.title('Menu Modelos')
 
 #lista de opciones
 opciones = ['Carga de datos', 'Analisis exploratorio']
@@ -41,6 +44,3 @@ if opcion == 'Carga de datos':
         st.info('Datos cargados correctamente')
     else:
         st.write('No se ha cargado ningun archivo')
-    
-
-    
