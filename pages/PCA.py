@@ -6,7 +6,7 @@ import seaborn as sns
 
 # importar las librerias para el PCA
 from sklearn.decomposition import PCA
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler, MinMaxScaler
 
 
 #metodo para cargar los datos
@@ -56,7 +56,7 @@ if opcion == 'Analisis Exploratorio':
 
     #verificar si el archivo ya fue cargado
     if 'df' in st.session_state:
-        df = st.session_state.df #Usamos el Fatagrame almacenado en la sesion
+        df = st.session_state.df #Usamos el Datagrame almacenado en la sesion
 
         st.subheader('Dataframe cargado:')
         st.write(df)
@@ -87,6 +87,7 @@ if opcion == 'Analisis Exploratorio':
             else:
                 st.info('No se han eliminado los valores nulos')
         else:
+            st.write(df.isnull().sum())
             st.success('El dataset no tiene valores nulos')
 
 
@@ -103,7 +104,34 @@ if opcion == 'Analisis Exploratorio':
                 st.success('Columnas eliminadas')
                 st.write("DataFrame después de eliminar columnas:")
                 st.write(df)
-            
+        else:
+            st.write(df)
 
+        #Normalizacion de Datos
+        st.subheader('Normalizacion de Datos')
+        normalizar = st.radio('¿Desea normalizar los datos?', ['Si', 'No'])
+
+        
+        if normalizar == 'Si':
+            metodo_normalizacion = st.radio('Seleccione el método de normalización', ['StandardScaler', 'MinMaxScaler'])
+
+            if st.button('Normalizar Datos'):
+                with st.spinner('Normalizando datos'):
+                    if metodo_normalizacion == 'StandardScaler':
+                        scaler = StandardScaler()
+
+                    elif metodo_normalizacion == 'MinMaxScaler':
+                        scaler = MinMaxScaler()
+
+                    
+                    df_normalizado = pd.DataFrame(scaler.fit_transform(df.select_dtypes(include=np.number)), 
+                                                    columns=df.select_dtypes(include=np.number).columns)
+                    st.session_state.df_normalizado = df_normalizado
+                    st.success(f'Los datos han sido normalizados con {metodo_normalizacion}')
+                    st.write(df_normalizado.head())
+        else:
+            st.info('No se han normalizado los datos')
+            st.write(st.session_state.df_normalizado.head())
+        
     else:
         st.warning('No se ha cargado ningun archivo')
