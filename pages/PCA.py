@@ -44,9 +44,7 @@ else:
     st.warning('No se ha cargado ningun archivo')
 
 
-opciones = ['Analisis Exploratorio',
-            'Analisis de Componentes Principales',
-            'PCA - Pinguinos']
+opciones = ['Analisis Exploratorio']
 
 # Seleccionar opcion
 opcion = st.sidebar.radio('Selecciona una Opcion',opciones)
