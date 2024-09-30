@@ -4,9 +4,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-# importar las librerias para el PCA
-from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
+from sklearn.metrics import DistanceMetric
+from sklearn.cluster import DBSCAN
+from sklearn.cluster import KMeans
+from sklearn.metrics import silhouette_score
 
 
 #metodo para cargar los datos
@@ -45,10 +47,8 @@ else:
 
 
 opciones = ['Analisis Exploratorio',
-            'Analisis de Componentes Principales',
-            'PCA - Pinguinos']
+            'KMEANS']
 
-# Seleccionar opcion
 opcion = st.sidebar.radio('Selecciona una Opcion',opciones)
 
 if opcion == 'Analisis Exploratorio':
@@ -92,7 +92,7 @@ if opcion == 'Analisis Exploratorio':
 
 
         # Eliminar columnas categoricas
-        st.subheader('Eliminar Columnas')
+        st.subheader('Eliminar Columnas Categoricas')
         lista_columnas = df.columns
         columnas = st.multiselect('Seleccione las columnas a eliminar', lista_columnas)
 
@@ -132,28 +132,66 @@ if opcion == 'Analisis Exploratorio':
         else:
             st.info('No se han normalizado los datos')
             st.write(st.session_state.df_normalizado.head())
-        
-        # PCA
-        st.subheader('PCA')
+
+        # Seleccionar las columnas para el clustering
+        st.subheader('Seleccionar Columnas')
         if 'df_normalizado' in st.session_state:
             df_normalizado = st.session_state.df_normalizado
 
-            pca = PCA()
-            componentes = pca.fit_transform(df_normalizado)
+            eje_x = st.selectbox("Selecciona una opción para el eje X:", df_normalizado.columns)
+            eje_y = st.selectbox("Selecciona una opción para el eje Y:", df_normalizado.columns)
 
-            st.write('Varianza explicada', pca.explained_variance_)
-            st.write('Varianza explicada por cada componente:', pca.explained_variance_ratio_)
+            if st.button('Seleccionar Columnas'):
+                with st.spinner('Seleccionando'):
+                    df_normalizado = df_normalizado[[eje_x, eje_y]]
+                    st.session_state.df_seleccionado = df_normalizado
+                    st.success('Columnas seleccionadas')
+                    st.write(df_normalizado.head())
 
-            varianza_acumulada = np.cumsum(pca.explained_variance_ratio_)
-            st.write('Varianza explicada acumulada:', varianza_acumulada)
-
-            fig=plt.figure(figsize=(7,7))
-            plt.plot(np.arange(1, len(varianza_acumulada) + 1), varianza_acumulada)# Cambiar la numeración del eje X
-            plt.hlines(y=0.9,xmin=1,xmax=len(varianza_acumulada) + 1,colors='r',linestyles='--')
-            plt.xlabel('Numero de Componentes Principales')
-            plt.ylabel('Varianza Acumulada')
-            st.pyplot(fig)
-        else:
-            st.warning('Primero normalice los datos')
     else:
         st.warning('No se ha cargado ningun archivo')
+
+
+elif opcion == 'KMEANS':
+    st.header("Clustering - KMeans")
+    st.write('DBSCAN es un algoritmo de clustering basado en densidad que agrupa puntos en clusters de alta densidad.')
+
+    if 'df_seleccionado' not in st.session_state:
+        st.warning("Por favor, carga un archivo primero en la sección 'Cargar Datos'.")
+    else:
+        df_seleccionado=st.session_state.df_seleccionado
+
+        # seleccionar el número de clusters
+        n_clusters=st.slider('Número de Clusters', 2, 10, 3)
+
+        # agregar el random state
+        random_state=st.slider('Random State', 0, 100, 42)
+
+        # numero de iteraciones
+        max_iter=st.slider('Numero de Iteraciones', 100, 1000, 300)
+
+        # ajustar el modelo KMeans
+
+        kmeans = KMeans(n_clusters=n_clusters,random_state=random_state,max_iter=max_iter).fit(df_seleccionado.values)
+
+        #st.write('Centroides:', kmeans.cluster_centers_)
+
+        # calcular el silhouette score
+        silhouette= silhouette_score(df_seleccionado.values, kmeans.labels_)
+        # dividir en dos columnas
+        col1,col2=st.columns(2)
+
+        with col1:
+            fig= plt.figure(figsize=(6, 6))
+            plt.scatter(df_seleccionado.iloc[:, 0], df_seleccionado.iloc[:, 1], c=kmeans.labels_, s=150,marker='8')
+            plt.scatter(kmeans.cluster_centers_[:, 0], kmeans.cluster_centers_[:, 1], c='red', s=350, marker='+')
+            plt.xlabel(df_seleccionado.columns[0])
+            plt.ylabel(df_seleccionado.columns[1])
+            plt.title('KMeans Clustering')
+            st.pyplot(fig)
+        with col2:
+            st.markdown('## Medidas de Evaluación')
+            st.write('Numero de Clusters:',kmeans.n_clusters)
+            st.write('Inercia:', kmeans.inertia_)
+            st.write('Silhouette Score:', silhouette)
+        
