@@ -5,8 +5,6 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
-from sklearn.metrics import DistanceMetric
-from sklearn.cluster import DBSCAN
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score
 
@@ -123,7 +121,6 @@ if opcion == 'Analisis Exploratorio':
                     elif metodo_normalizacion == 'MinMaxScaler':
                         scaler = MinMaxScaler()
 
-                    
                     df_normalizado = pd.DataFrame(scaler.fit_transform(df.select_dtypes(include=np.number)), 
                                                     columns=df.select_dtypes(include=np.number).columns)
                     st.session_state.df_normalizado = df_normalizado
@@ -131,7 +128,7 @@ if opcion == 'Analisis Exploratorio':
                     st.write(df_normalizado.head())
         else:
             st.info('No se han normalizado los datos')
-            st.write(st.session_state.df_normalizado.head())
+            st.session_state.df = df
 
         # Seleccionar las columnas para el clustering
         st.subheader('Seleccionar Columnas')
@@ -148,16 +145,25 @@ if opcion == 'Analisis Exploratorio':
                     st.success('Columnas seleccionadas')
                     st.write(df_normalizado.head())
 
-    else:
-        st.warning('No se ha cargado ningun archivo')
+        elif 'df' in st.session_state:
+            df = st.session_state.df
+            eje_x = st.selectbox("Selecciona una opción para el eje X:", df.columns)
+            eje_y = st.selectbox("Selecciona una opción para el eje Y:", df.columns)
+
+            if st.button('Seleccionar Columnas'):
+                with st.spinner('Seleccionando'):
+                    df = df[[eje_x, eje_y]]
+                    st.session_state.df_seleccionado = df
+                    st.success('Columnas seleccionadas')
+                    st.write(df.head())
 
 
 elif opcion == 'KMEANS':
     st.header("Clustering - KMeans")
-    st.write('DBSCAN es un algoritmo de clustering basado en densidad que agrupa puntos en clusters de alta densidad.')
+    st.write('Kmeans es un algoritmo de clustering que agrupa los datos en K grupos')
 
     if 'df_seleccionado' not in st.session_state:
-        st.warning("Por favor, carga un archivo primero en la sección 'Cargar Datos'.")
+        st.warning("Por favor, selecione los ejes X e Y en la opción de Análisis Exploratorio")
     else:
         df_seleccionado=st.session_state.df_seleccionado
 
