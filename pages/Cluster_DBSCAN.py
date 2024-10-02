@@ -5,9 +5,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
-from sklearn.metrics import DistanceMetric
 from sklearn.cluster import DBSCAN
-from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score
 
 
@@ -49,6 +47,7 @@ else:
 opciones = ['Analisis Exploratorio',
             'DBSCAN']
 
+# Seleccionar opcion
 opcion = st.sidebar.radio('Selecciona una Opcion',opciones)
 
 if opcion == 'Analisis Exploratorio':
@@ -123,7 +122,6 @@ if opcion == 'Analisis Exploratorio':
                     elif metodo_normalizacion == 'MinMaxScaler':
                         scaler = MinMaxScaler()
 
-                    
                     df_normalizado = pd.DataFrame(scaler.fit_transform(df.select_dtypes(include=np.number)), 
                                                     columns=df.select_dtypes(include=np.number).columns)
                     st.session_state.df_normalizado = df_normalizado
@@ -131,13 +129,12 @@ if opcion == 'Analisis Exploratorio':
                     st.write(df_normalizado.head())
         else:
             st.info('No se han normalizado los datos')
-            st.write(st.session_state.df_normalizado.head())
-
+            st.session_state.df = df
+        
         # Seleccionar las columnas para el clustering
-        st.subheader('Seleccionar Columnas')
+        st.subheader('Seleccionar Columnas ejes X e Y')
         if 'df_normalizado' in st.session_state:
             df_normalizado = st.session_state.df_normalizado
-
             eje_x = st.selectbox("Selecciona una opción para el eje X:", df_normalizado.columns)
             eje_y = st.selectbox("Selecciona una opción para el eje Y:", df_normalizado.columns)
 
@@ -148,8 +145,17 @@ if opcion == 'Analisis Exploratorio':
                     st.success('Columnas seleccionadas')
                     st.write(df_normalizado.head())
 
-    else:
-        st.warning('No se ha cargado ningun archivo')
+        elif 'df' in st.session_state:
+            df = st.session_state.df
+            eje_x = st.selectbox("Selecciona una opción para el eje X:", df.select_dtypes(include=np.number).columns)
+            eje_y = st.selectbox("Selecciona una opción para el eje Y:", df.select_dtypes(include=np.number).columns)
+
+            if st.button('Seleccionar Columnas'):
+                with st.spinner('Seleccionando'):
+                    df_seleccionado = df[[eje_x, eje_y]]
+                    st.session_state.df_seleccionado = df_seleccionado
+                    st.success('Columnas seleccionadas')
+                    st.write(df_seleccionado.head())
 
 
 elif opcion == 'DBSCAN':
@@ -157,7 +163,7 @@ elif opcion == 'DBSCAN':
     st.write('DBSCAN es un algoritmo de clustering basado en densidad que agrupa puntos en clusters de alta densidad.')
 
     if 'df_seleccionado' not in st.session_state:
-        st.warning("Por favor, carga un archivo primero en la sección 'Cargar Datos'.")
+        st.warning("Por favor, selecione los ejes X e Y en la opción de Análisis Exploratorio")
     else:
         df_seleccionado=st.session_state.df_seleccionado
     

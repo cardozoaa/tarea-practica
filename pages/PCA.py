@@ -154,7 +154,6 @@ elif opcion == 'PCA':
         plt.ylabel('Varianza Acumulada')
         st.pyplot(fig)
     else:
-        
         if 'df' in st.session_state:
             st.info('Datos sin normalizar')
             df = st.session_state.df
