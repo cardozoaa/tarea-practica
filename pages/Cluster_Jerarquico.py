@@ -5,11 +5,6 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
-from sklearn.metrics import DistanceMetric
-from sklearn.cluster import DBSCAN
-from sklearn.cluster import KMeans
-from sklearn.metrics import silhouette_score
-
 from scipy.cluster.hierarchy import dendrogram, linkage, fcluster
 
 #metodo para cargar los datos
@@ -112,7 +107,6 @@ if opcion == 'Analisis Exploratorio':
         st.subheader('Normalizacion de Datos')
         normalizar = st.radio('¿Desea normalizar los datos?', ['Si', 'No'])
 
- 
         if normalizar == 'Si':
             metodo_normalizacion = st.radio('Seleccione el método de normalización', ['StandardScaler', 'MinMaxScaler'])
 
@@ -124,7 +118,6 @@ if opcion == 'Analisis Exploratorio':
                     elif metodo_normalizacion == 'MinMaxScaler':
                         scaler = MinMaxScaler()
 
-                    
                     df_normalizado = pd.DataFrame(scaler.fit_transform(df.select_dtypes(include=np.number)), 
                                                     columns=df.select_dtypes(include=np.number).columns)
                     st.session_state.df_normalizado = df_normalizado
@@ -132,19 +125,17 @@ if opcion == 'Analisis Exploratorio':
                     st.write(df_normalizado.head())
         else:
             st.info('No se han normalizado los datos')
-            st.write(st.session_state.df_normalizado.head())
-
-    else:
-        st.warning('No se ha cargado ningun archivo')
+            st.session_state.df = df
 
 
 elif opcion == 'JERARQUICO':
     st.header("Clustering - JERARQUICO")
     st.write('En esta sección se realizará el clustering jerárquico de los datos cargados')
-
-    # Seleccionar las columnas para el clustering
-    st.sidebar.subheader('Seleccionar Columnas')
+    
     if 'df_normalizado' in st.session_state:
+
+        # Seleccionar las columnas para el clustering
+        st.sidebar.subheader('Seleccionar Columnas')
         df_normalizado = st.session_state.df_normalizado
 
         # Agregar columnas al multiselect
@@ -187,5 +178,50 @@ elif opcion == 'JERARQUICO':
                 st.pyplot(fig)
         else:
             st.warning('Por favor, selecciona al menos una columna')
-    else:
-        st.warning('Por favor, normaliza los datos antes de continuar')
+
+    elif 'df' in st.session_state:
+
+        # Seleccionar las columnas para el clustering
+        st.sidebar.subheader('Seleccionar Columnas')
+        df = st.session_state.df
+
+        # Agregar columnas al multiselect
+        lista_columnas = df.columns
+        columnas = st.sidebar.multiselect('Selecciona las columnas para el clustering', lista_columnas)
+        
+        if columnas:
+                X = df[columnas]
+                st.write(df.head())
+
+                # Seleccionar el tipo de enlace
+                enlace = st.sidebar.selectbox('Selecciona un tipo de enlace:', ['single', 'complete', 'average', 'ward'])
+
+                # Calcular la matriz de enlace
+                Z = linkage(X, enlace)
+                st.write(Z)
+
+                # Graficas el dendrograma
+                fig = plt.figure(figsize=(6, 6))
+                # Agregar linea de corte
+                corte = st.sidebar.slider('Seleccione un valor para el corte', 0, 10, 3)
+
+                dendrogram(Z)
+                plt.axhline(y=corte, color='r', linestyle='--')
+                st.pyplot(fig)
+
+                # Crear lista de criterios
+                criterios = ['maxclust', 'distance']
+                criterio = st.sidebar.radio('Seleccione un criterio', criterios)
+                k = st.sidebar.slider('Seleccione el numero de clusters', 2, 10, 2)
+
+                # Asignar clusters
+                clusters = fcluster(Z, k, criterion=criterio)
+                df['cluster'] = clusters
+                st.write(df.head())
+
+                # Graficar los clusters
+                fig = plt.figure(figsize=(6, 6))
+                sns.scatterplot(x=X.iloc[:, 0], y=X.iloc[:, 1], c=clusters, markers='8', palette='tab10')
+                st.pyplot(fig)
+        else:
+            st.warning('Por favor, selecciona al menos una columna')
