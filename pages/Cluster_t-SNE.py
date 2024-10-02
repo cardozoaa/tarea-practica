@@ -128,8 +128,6 @@ if opcion == 'Analisis Exploratorio':
         else:
             st.info('No se han normalizado los datos')
             st.session_state.df = df
-    else:
-        st.warning('No se ha cargado ningun archivo')
 
 
 elif opcion == 't-SNE':
@@ -160,8 +158,6 @@ elif opcion == 't-SNE':
             x2=tsne.fit_transform(x)
 
             # graficar
-        
-
             if n_components==2:
                 fig= plt.figure(figsize=(6,6))
                 sns.scatterplot(x=x2[:,0],y=x2[:,1],hue=y,palette='viridis')
@@ -171,7 +167,8 @@ elif opcion == 't-SNE':
                 ax=fig_3d.add_subplot(111,projection='3d')
                 ax.scatter(x2[:,0],x2[:,1],x2[:,2],c=y,cmap='viridis')
                 st.pyplot(fig_3d)
-    else:
+
+    elif 'df' in st.session_state:
         df = st.session_state.df
 
         # Agregar columna Etiqueta
@@ -194,8 +191,6 @@ elif opcion == 't-SNE':
             x2=tsne.fit_transform(x)
 
             # graficar
-        
-
             if n_components==2:
                 fig= plt.figure(figsize=(6,6))
                 sns.scatterplot(x=x2[:,0],y=x2[:,1],hue=y,palette='viridis')
